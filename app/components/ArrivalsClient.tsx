@@ -25,6 +25,31 @@ export default function ArrivalsClient({
     new Date().toISOString()
   );
   const [error, setError] = useState<string | null>(null);
+  const [backHref, setBackHref] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const referrer = document.referrer;
+
+    const linePageMatch = referrer.match(/\/line\/([^\/\?\#]+)/);
+    if (linePageMatch) {
+      const lineName = decodeURIComponent(linePageMatch[1]);
+      setBackHref(`/line/${encodeURIComponent(lineName)}`);
+      return;
+    }
+
+    const allRoutes = new Set<string>();
+    for (const meta of Object.values(baseMeta)) {
+      if (meta?.routes) {
+        for (const route of meta.routes) {
+          allRoutes.add(route);
+        }
+      }
+    }
+    const sortedRoutes = Array.from(allRoutes).sort();
+    if (sortedRoutes.length > 0) {
+      setBackHref(`/line/${encodeURIComponent(sortedRoutes[0])}`);
+    }
+  }, [baseMeta]);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,6 +92,7 @@ export default function ArrivalsClient({
   return (
     <>
       <HeaderWithBack
+        backHref={backHref}
         title={
           <span>
             Data updated: <ClientTime iso={loadedAtIso} />
